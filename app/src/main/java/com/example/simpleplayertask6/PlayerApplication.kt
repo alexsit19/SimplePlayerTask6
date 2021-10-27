@@ -4,7 +4,7 @@ import android.app.Application
 import android.content.Context
 import android.util.Log
 
-class PlayerApplication: Application() {
+class PlayerApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
@@ -14,7 +14,5 @@ class PlayerApplication: Application() {
 
     companion object {
         lateinit var context: Context
-
     }
-
 }

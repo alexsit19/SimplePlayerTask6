@@ -1,7 +1,6 @@
 package com.example.exoplayermyui.data
 
 import android.content.Context
-import android.util.Log
 import com.example.exoplayermyui.model.TrackJson
 import com.squareup.moshi.JsonAdapter
 import com.squareup.moshi.Moshi
@@ -9,11 +8,7 @@ import com.squareup.moshi.Types
 
 class TrackResource() {
 
-    init{
-        Log.d("DEBUG", "TrackResource INIT")
-    }
-
-     fun getTracksFromJson(context: Context): List<TrackJson>? {
+    fun getTracksFromJson(context: Context): List<TrackJson>? {
         val moshi = Moshi.Builder()
             .build()
 
@@ -25,6 +20,5 @@ class TrackResource() {
         val json = context.assets.open(file).bufferedReader().use { it.readText() }
 
         return adapter.fromJson(json)
-
     }
 }

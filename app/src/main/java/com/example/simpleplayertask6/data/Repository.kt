@@ -1,7 +1,6 @@
 package com.example.exoplayermyui.data
 
 import android.content.Context
-import android.util.Log
 import com.example.exoplayermyui.model.TrackJson
 
 interface Repository {
@@ -10,7 +9,7 @@ interface Repository {
 class TrackRepository(
     private val trackResource: TrackResource,
     private val context: Context
-    ): Repository {
+) : Repository {
 
     override suspend fun getTracks(): List<TrackJson>? {
         return trackResource.getTracksFromJson(context)

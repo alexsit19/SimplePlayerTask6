@@ -1,7 +1,9 @@
 package com.example.simpleplayertask6
 
-import android.util.Log
-import androidx.lifecycle.*
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.viewModelScope
 import com.example.exoplayermyui.data.TrackRepository
 import com.example.exoplayermyui.data.TrackResource
 import com.example.exoplayermyui.model.TrackJson
@@ -12,8 +14,11 @@ import kotlinx.coroutines.launch
 class PlayerViewModel(
     private val trackResource: TrackResource,
     private val application: PlayerApplication
-    ): AndroidViewModel(application) {
+) : AndroidViewModel(application) {
 
+    private var playButtonEnabled = false
+    private var stopButtonEnabled = false
+    private var pauseButtonEnabled = false
     private var playWhenReady = true
     private var currentWindow = 0
     private var playbackPosition = 0L
@@ -28,21 +33,21 @@ class PlayerViewModel(
     init {
         viewModelScope.launch {
             _tracks.value = repository.getTracks()
-            Log.d("DEBUG", "Tracks ${tracks.value.toString()}")
         }
         size = if (tracks.value != null) {
             tracks.value!!.size
         } else {
             0
         }
+        initializePlayer()
+        setPlayerStatus(PlayerStatus.PLAYING)
     }
 
     fun playNext() {
         if (currentMediaItem < size - 1) {
             currentMediaItem++
         }
-        Log.d("DEBUG", "PlayNext $currentMediaItem")
-        player?.playWhenReady = false
+        player.playWhenReady = false
         setMediaItem()?.let { player?.setMediaItem(it) }
         play()
     }
@@ -51,28 +56,30 @@ class PlayerViewModel(
         if (currentMediaItem != 0) {
             currentMediaItem --
         }
-        Log.d("DEBUG", "PlayPrev $currentMediaItem")
-        player?.playWhenReady = false
-        setMediaItem()?.let { player?.setMediaItem(it) }
+        player.playWhenReady = false
+        setMediaItem()?.let { player.setMediaItem(it) }
         play()
     }
 
     fun play() {
-        player?.playWhenReady = true
-        player?.play()
+        player.playWhenReady = true
+        player.play()
+        setPlayerStatus(PlayerStatus.PLAYING)
     }
 
     fun stop() {
-        player?.seekTo(0)
-        player?.playWhenReady = false
+        player.seekTo(0)
+        player.playWhenReady = false
+        setPlayerStatus(PlayerStatus.STOPPED)
     }
 
     fun pause() {
-        player?.playWhenReady = false
+        player.playWhenReady = false
+        setPlayerStatus(PlayerStatus.PAUSED)
     }
 
-    fun releasePlayer() {
-        player?.run {
+    private fun releasePlayer() {
+        player.run {
             playbackPosition = this.currentPosition
             currentWindow = this.currentWindowIndex
             playWhenReady = this.playWhenReady
@@ -81,7 +88,7 @@ class PlayerViewModel(
         _player = null
     }
 
-    fun initializePlayer() {
+    private fun initializePlayer() {
         _player = SimpleExoPlayer.Builder(PlayerApplication.context)
             .build()
             .also { exoPlayer ->
@@ -92,22 +99,15 @@ class PlayerViewModel(
             }
     }
 
-//    @OnLifecycleEvent(Lifecycle.Event.ON_STOP)
-//    fun savePlayBackPosition() {
-//        playbackPosition = player?.contentPosition ?: 0
-//        //Log.d("DEBUG", position)
-//    }
-
     private fun setMediaItem(): MediaItem? {
         val mediaItem = tracks.value?.get(currentMediaItem)?.let {
-                trackJson ->  MediaItem.fromUri(trackJson.trackUri)
+                trackJson -> MediaItem.fromUri(trackJson.trackUri)
         }
         return mediaItem
     }
 
     fun getTrackTitle(): String {
         val title = tracks.value?.get(currentMediaItem)?.title
-
         return title ?: ""
     }
 
@@ -120,4 +120,28 @@ class PlayerViewModel(
         val imageUri = tracks.value?.get(currentMediaItem)?.bitmapUri
         return imageUri ?: ""
     }
+
+    private fun setPlayerStatus(playerStatus: PlayerStatus) {
+        when (playerStatus) {
+            PlayerStatus.STOPPED -> {
+                stopButtonEnabled = false
+                playButtonEnabled = true
+                pauseButtonEnabled = false
+            }
+            PlayerStatus.PAUSED -> {
+                stopButtonEnabled = true
+                playButtonEnabled = true
+                pauseButtonEnabled = false
+            }
+            PlayerStatus.PLAYING -> {
+                stopButtonEnabled = true
+                playButtonEnabled = false
+                pauseButtonEnabled = true
+            }
+        }
+    }
+
+    fun getPlayButtonStatus() = playButtonEnabled
+    fun getStopButtonStatus() = stopButtonEnabled
+    fun getPauseButtonStatus() = stopButtonEnabled
 }

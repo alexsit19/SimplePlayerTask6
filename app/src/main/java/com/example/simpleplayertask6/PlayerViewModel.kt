@@ -24,9 +24,8 @@ class PlayerViewModel(
     private var playbackPosition = 0L
     private var repository = TrackRepository(trackResource, PlayerApplication.context)
     private var _tracks = MutableLiveData<List<TrackJson>>()
-    val tracks: LiveData<List<TrackJson>> get() = _tracks
-    private var _player: SimpleExoPlayer? = null
-    val player get() = requireNotNull(_player)
+    private val tracks: LiveData<List<TrackJson>> get() = _tracks
+    private var player: SimpleExoPlayer? = null
     private var currentMediaItem: Int = 0
     private var size = 0
 
@@ -47,7 +46,7 @@ class PlayerViewModel(
         if (currentMediaItem < size - 1) {
             currentMediaItem++
         }
-        player.playWhenReady = false
+        player?.playWhenReady = false
         setMediaItem()?.let { player?.setMediaItem(it) }
         play()
     }
@@ -56,40 +55,40 @@ class PlayerViewModel(
         if (currentMediaItem != 0) {
             currentMediaItem --
         }
-        player.playWhenReady = false
-        setMediaItem()?.let { player.setMediaItem(it) }
+        player?.playWhenReady = false
+        setMediaItem()?.let { player?.setMediaItem(it) }
         play()
     }
 
     fun play() {
-        player.playWhenReady = true
-        player.play()
+        player?.playWhenReady = true
+        player?.play()
         setPlayerStatus(PlayerStatus.PLAYING)
     }
 
     fun stop() {
-        player.seekTo(0)
-        player.playWhenReady = false
+        player?.seekTo(0)
+        player?.playWhenReady = false
         setPlayerStatus(PlayerStatus.STOPPED)
     }
 
     fun pause() {
-        player.playWhenReady = false
+        player?.playWhenReady = false
         setPlayerStatus(PlayerStatus.PAUSED)
     }
 
     private fun releasePlayer() {
-        player.run {
+        player?.run {
             playbackPosition = this.currentPosition
             currentWindow = this.currentWindowIndex
             playWhenReady = this.playWhenReady
             release()
         }
-        _player = null
+        player = null
     }
 
-    private fun initializePlayer() {
-        _player = SimpleExoPlayer.Builder(PlayerApplication.context)
+    private fun initializePlayer(): SimpleExoPlayer {
+        val player = SimpleExoPlayer.Builder(PlayerApplication.context)
             .build()
             .also { exoPlayer ->
                 setMediaItem()?.let { exoPlayer.setMediaItem(it) }
@@ -97,6 +96,7 @@ class PlayerViewModel(
                 exoPlayer.seekTo(currentWindow, playbackPosition)
                 exoPlayer.prepare()
             }
+        return player
     }
 
     private fun setMediaItem(): MediaItem? {

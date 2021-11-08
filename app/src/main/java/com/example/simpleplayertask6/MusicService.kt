@@ -45,7 +45,7 @@ class MusicService : MediaBrowserServiceCompat() {
 
     init {
         serviceScope.launch {
-            musicCatalog = repository?.getTracks()
+            musicCatalog = repository.getTracks()
         }
     }
 
@@ -69,35 +69,40 @@ class MusicService : MediaBrowserServiceCompat() {
             notificationManager.createNotificationChannel(notificationChannel)
         }
 
-        mediaSession?.setFlags(
-            MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS
-                    or MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS
-        )
-
-        val activityIntent = Intent(applicationContext, MainActivity::class.java)
-        mediaSession?.setSessionActivity(
-            PendingIntent.getActivity(
-                applicationContext, 0,
-                activityIntent, 0
-            )
-        )
-
-        val mediaButtonIntent = Intent(
-            Intent.ACTION_MEDIA_BUTTON, null, applicationContext,
-            MediaButtonReceiver::class.java
-        )
-        mediaSession?.setMediaButtonReceiver(
-            PendingIntent.getBroadcast(
-                applicationContext, 0,
-                mediaButtonIntent, 0
-            )
-        )
+        mediaSessionSetParameters()
 
         val notification = getNotification(PlaybackStateCompat.STATE_PLAYING)
         NotificationManagerCompat.from(this@MusicService).notify(
             33,
             getNotification(PlaybackStateCompat.STATE_PLAYING)
         )
+    }
+
+    private fun mediaSessionSetParameters() {
+        val activityIntent = Intent(applicationContext, MainActivity::class.java)
+        val mediaButtonIntent = Intent(
+            Intent.ACTION_MEDIA_BUTTON, null, applicationContext,
+            MediaButtonReceiver::class.java
+        )
+
+        with(mediaSession) {
+            setFlags(
+                MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS
+                        or MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS
+            )
+            setSessionActivity(
+                PendingIntent.getActivity(
+                    applicationContext, 0,
+                    activityIntent, 0
+                )
+            )
+            setMediaButtonReceiver(
+                PendingIntent.getBroadcast(
+                    applicationContext, 0,
+                    mediaButtonIntent, 0
+                )
+            )
+        }
     }
 
     private fun refreshNotificationAndForegroundStatus(playbackState: Int) {

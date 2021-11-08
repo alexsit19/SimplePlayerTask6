@@ -24,7 +24,6 @@ import androidx.media.session.MediaButtonReceiver
 import com.example.exoplayermyui.data.TrackRepository
 import com.example.exoplayermyui.data.TrackResource
 import com.example.exoplayermyui.model.TrackJson
-import com.google.android.exoplayer2.SimpleExoPlayer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -33,12 +32,16 @@ import android.media.browse.MediaBrowser.MediaItem.FLAG_PLAYABLE as FLAG_PL
 
 class MusicService : MediaBrowserServiceCompat() {
 
-    private var mediaSession: MediaSessionCompat? = null
+    private val mediaSession: MediaSessionCompat by lazy { initMediaSession() }
     private var musicCatalog: List<TrackJson>? = null
-    private var repository: TrackRepository? = null
+    private val repository: TrackRepository by lazy {
+        TrackRepository.getTrackRepository(
+            TrackResource(),
+            this.applicationContext
+        )
+    }
     private val serviceJob = Job()
     private val serviceScope = CoroutineScope(Dispatchers.Main + serviceJob)
-    private var exoPlayer: SimpleExoPlayer? = null
 
     init {
         serviceScope.launch {
@@ -46,12 +49,14 @@ class MusicService : MediaBrowserServiceCompat() {
         }
     }
 
+    private fun initMediaSession(): MediaSessionCompat {
+        return MediaSessionCompat(this, "MusicService")
+    }
+
     @SuppressLint("WrongConstant")
     override fun onCreate() {
         super.onCreate()
         Log.d("DEBUG", "SERVICE CREATE")
-        repository = TrackRepository(TrackResource(), this.applicationContext)
-        mediaSession = MediaSessionCompat(this, "MusicService")
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val notificationChannel = NotificationChannel(

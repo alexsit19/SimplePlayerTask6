@@ -14,4 +14,13 @@ class TrackRepository(
     override suspend fun getTracks(): List<TrackJson>? {
         return trackResource.getTracksFromJson(context)
     }
+
+    companion object {
+        fun getTrackRepository(
+            trackResource: TrackResource,
+            context: Context
+        ): TrackRepository {
+            return TrackRepository(trackResource, context)
+        }
+    }
 }
